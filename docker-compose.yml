@@ -1,19 +1,17 @@
 version: '3.8'
 
 services:
-  # --- 1. ZOOKEEPER ---
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
+    image: confluentinc/cp-zookeeper:7.4.0
     container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "2181:2181"
+    networks:
+      - monitoring
 
-  # --- 2. KAFKA ---
   kafka:
-    image: confluentinc/cp-kafka:7.5.0
+    image: confluentinc/cp-kafka:7.4.0  # ✅ Version spécifique compatible Zookeeper
     container_name: kafka
     depends_on:
       - zookeeper
@@ -26,27 +24,51 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:29092"]
-      interval: 5s
-      timeout: 10s
-      retries: 5
-      start_period: 15s
+    networks:
+      - monitoring
 
-  # --- 3. PRODUCER (Ton app actuelle) ---
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    networks:
+      - monitoring
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+
   producer:
-    image: nexir0s/monitoring-app:latest
+    build:
+      context: .
+      dockerfile: monitoring-producer/Dockerfile
     container_name: monitoring-producer
     depends_on:
-      kafka:
-        condition: service_healthy
+      - kafka
+    networks:
+      - monitoring
     restart: on-failure
 
-  # --- 4. CONSUMER (Nouvelle app) ---
   consumer:
-    image: nexir0s/monitoring-consumer:latest
+    build:
+      context: .
+      dockerfile: monitoring-consumer/Dockerfile
     container_name: monitoring-consumer
     depends_on:
-      kafka:
-        condition: service_healthy
+      - kafka
+      - influxdb
+    environment:
+      INFLUX_URL: "http://influxdb:8086"
+      INFLUX_TOKEN: "ReqBW1LQswnoYebxpL2p7ZjzudrOUmvdn_Hj5CaZmV1sK48AY0B93nUZQQArB5n1T8YL8Nx_u85MMKZwtFXdhQ=="
+      INFLUX_ORG: "monitoring-org"
+      INFLUX_BUCKET: "monitoring"
+    networks:
+      - monitoring
     restart: on-failure
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  influxdb-data:
+
