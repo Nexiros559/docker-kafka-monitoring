@@ -11,7 +11,7 @@ services:
       - monitoring
 
   kafka:
-    image: confluentinc/cp-kafka:7.4.0  # ✅ Version spécifique compatible Zookeeper
+    image: confluentinc/cp-kafka:7.4.0
     container_name: kafka
     depends_on:
       - zookeeper
@@ -36,6 +36,15 @@ services:
       - monitoring
     volumes:
       - influxdb-data:/var/lib/influxdb2
+    # C'EST ICI QUE LA MAGIE OPÈRE (Auto-initialisation)
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=password12345  # Mot de passe admin (min 8 chars)
+      - DOCKER_INFLUXDB_INIT_ORG=monitoring-org
+      - DOCKER_INFLUXDB_INIT_BUCKET=monitoring
+      # On force le token pour qu'il corresponde à celui de tes applis Java
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=ReqBW1LQswnoYebxpL2p7ZjzudrOUmvdn_Hj5CaZmV1sK48AY0B93nUZQQArB5n1T8YL8Nx_u85MMKZwtFXdhQ==
 
   producer:
     build:
@@ -65,10 +74,28 @@ services:
       - monitoring
     restart: on-failure
 
+  # Ajout de l'API
+  api:
+    build:
+      context: .
+      dockerfile: monitoring-api/Dockerfile
+    container_name: monitoring-api
+    ports:
+      - "8080:8080" # On expose le port pour que le prof puisse tester dans son navigateur
+    depends_on:
+      - influxdb
+    environment:
+      INFLUX_URL: "http://influxdb:8086"
+      INFLUX_TOKEN: "ReqBW1LQswnoYebxpL2p7ZjzudrOUmvdn_Hj5CaZmV1sK48AY0B93nUZQQArB5n1T8YL8Nx_u85MMKZwtFXdhQ=="
+      INFLUX_ORG: "monitoring-org"
+      INFLUX_BUCKET: "monitoring"
+    networks:
+      - monitoring
+    restart: on-failure
+
 networks:
   monitoring:
     driver: bridge
 
 volumes:
   influxdb-data:
-
