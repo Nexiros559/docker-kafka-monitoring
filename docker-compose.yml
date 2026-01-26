@@ -18,6 +18,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Porte Docker (29092) vs Porte PC (9092)
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -34,14 +35,12 @@ services:
       - monitoring
     volumes:
       - influxdb-data:/var/lib/influxdb2
-    # C'EST ICI QUE LA MAGIE OPÈRE (Auto-initialisation)
     environment:
       - DOCKER_INFLUXDB_INIT_MODE=setup
-      - DOCKER_INFLUXDB_INIT_USERNAME=admin
-      - DOCKER_INFLUXDB_INIT_PASSWORD=password12345  # Mot de passe admin (min 8 chars)
+      - DOCKER_INFLUXDB_INIT_USERNAME=Nexiros
+      - DOCKER_INFLUXDB_INIT_PASSWORD=password
       - DOCKER_INFLUXDB_INIT_ORG=monitoring-org
       - DOCKER_INFLUXDB_INIT_BUCKET=monitoring
-      # On force le token pour qu'il corresponde à celui de tes applis Java
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=ReqBW1LQswnoYebxpL2p7ZjzudrOUmvdn_Hj5CaZmV1sK48AY0B93nUZQQArB5n1T8YL8Nx_u85MMKZwtFXdhQ==
 
   producer:
@@ -51,6 +50,9 @@ services:
     container_name: monitoring-producer
     depends_on:
       - kafka
+    environment:
+      # INDISPENSABLE : On dit à Spring d'utiliser le port interne de Docker
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     networks:
       - monitoring
     restart: on-failure
@@ -64,6 +66,8 @@ services:
       - kafka
       - influxdb
     environment:
+      # INDISPENSABLE : Connexion Kafka interne
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       INFLUX_URL: "http://influxdb:8086"
       INFLUX_TOKEN: "ReqBW1LQswnoYebxpL2p7ZjzudrOUmvdn_Hj5CaZmV1sK48AY0B93nUZQQArB5n1T8YL8Nx_u85MMKZwtFXdhQ=="
       INFLUX_ORG: "monitoring-org"
@@ -72,14 +76,13 @@ services:
       - monitoring
     restart: on-failure
 
-  # Ajout de l'API
   api:
     build:
       context: .
       dockerfile: monitoring-api/Dockerfile
     container_name: monitoring-api
     ports:
-      - "8080:8080" # On expose le port pour que le prof puisse tester dans son navigateur
+      - "8080:8080"
     depends_on:
       - influxdb
     environment:
