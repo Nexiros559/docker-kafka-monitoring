@@ -32,6 +32,14 @@ Le système est orchestré par Docker Compose et se compose de modules autonomes
 
     Web Dashboard : Interface responsive (Bootstrap/Chart.js) pour la visualisation des alertes et graphiques.
 
+    ```mermaid
+graph LR
+    P[🖥️ Producer Agent] -- JSON --> K((Apache Kafka))
+    K -- Stream --> C[⚙️ Consumer Service]
+    C -- Write --> I[(InfluxDB)]
+    I -. Read .-> A[🌐 REST API]
+    A -- Fetch --> D[💻 Web Dashboard]
+
 🚀 Installation Rapide (Quick Start)
 
 L'intégralité de la stack (Kafka, Zookeeper, InfluxDB, Services Java) est conteneurisée. Vous n'avez besoin que de Docker sur votre machine.
