@@ -31,7 +31,7 @@
         <div class="col-md-6 mb-4">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>🌡️ CPU Temperature</span>
+                    <span>🌡️ CPU </span>
                     <span id="cpuValue" class="badge bg-danger">-- °C</span>
                 </div>
                 <div class="card-body">
@@ -292,7 +292,7 @@
     // ==========================================
     async function downloadJson() {
         try {
-            const response = await fetch('/api/metrics');
+            const response = await fetch('http://localhost:8080/api/metrics');
             const data = await response.json();
             const jsonString = JSON.stringify(data, null, 2);
             const blob = new Blob([jsonString], { type: "application/json" });
