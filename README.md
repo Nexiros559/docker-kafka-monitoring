@@ -46,17 +46,19 @@ graph LR
 
 L'intégralité de la stack (Kafka, Zookeeper, InfluxDB, Services Java) est conteneurisée. Vous n'avez besoin que de Docker sur votre machine.
 1. Cloner le projet
-Bash
+```Bash
 
 git clone [https://github.com/Nexiros559/projet-annuel.git](https://github.com/Nexiros559/projet-annuel.git)
 cd projet-annuel
+```
 
 2. Lancer la Stack
 
 Utilisez Docker Compose pour construire et lancer tous les services en une commande :
-Bash
+```Bash
 
 docker compose -f docker-compose.prod.yml up -d
+```
 
 L'initialisation peut prendre environ 30 secondes le temps que Kafka et InfluxDB soient opérationnels.
 3. Accéder au Dashboard
