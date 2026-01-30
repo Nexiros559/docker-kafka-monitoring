@@ -48,7 +48,7 @@ L'intégralité de la stack (Kafka, Zookeeper, InfluxDB, Services Java) est cont
 1. Cloner le projet
 ```Bash
 
-git clone [https://github.com/Nexiros559/projet-annuel.git](https://github.com/Nexiros559/projet-annuel.git)
+git clone https://github.com/Nexiros559/projet-annuel.git
 cd projet-annuel
 ```
 
